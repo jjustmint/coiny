@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model users {
+  userId         Int              @id @default(autoincrement())
+  username       String           @unique
+  password       String
+  name           String           @default("Anonymous")
+  image          String?
+  created        DateTime         @default(now())
+  transactions   transactions[]
+  goals          goals[]
+  plans          plans[]
+  userCategories userCategories[]
+  bonus          bonus[]
+}
+
+model transactions {
+  transactionId Int              @id @default(autoincrement())
+  userId        Int
+  categoryId    Int
+  amount        Float
+  created       DateTime         @default(now())
+  users         users            @relation(onDelete: Cascade, fields: [userId], references: [userId])
+  categories    categories?      @relation(fields: [categoryId], references: [categoryId])
+}
+
+
+
+model categories {
+  categoryId     Int              @id @default(autoincrement())
+  name           String
+  iconId         Int
+  icon           categoriesIcon   @relation(fields: [iconId], references: [iconId])
+  transactions   transactions[]
+  userCategories userCategories[]
+}
+
+model categoriesIcon {
+  iconId     Int          @id @default(autoincrement())
+  iconName   String
+  categories categories[]
+}
+
+model userCategories {
+  userId     Int
+  categoryId Int
+  users      users      @relation(onDelete: Cascade, fields: [userId], references: [userId])
+  categories categories @relation(onDelete: Cascade, fields: [categoryId], references: [categoryId])
+
+  @@id([userId, categoryId])
+}
+
+model goals {
+  goalId        Int        @id @default(autoincrement())
+  userId        Int
+  name          String?
+  goalAmount    Int
+  currentAmount Int        @default(0)
+  status        goalStatus @default(ongoing)
+  created       DateTime   @default(now())
+  users         users      @relation(fields: [userId], references: [userId], onDelete: Cascade)
+}
+
+enum goalStatus {
+  ongoing
+  completed
+}
+
+model plans {
+  planId      Int      @id @default(autoincrement())
+  userId      Int
+  monthly     Float
+  save        Float
+  currentSave Float
+  created     DateTime @default(now())
+  users       users    @relation(fields: [userId], references: [userId], onDelete: Cascade)
+}
+
+model bonus {
+  bonusId Int        @id @default(autoincrement())
+  userId  Int
+  usage   bonusUsage
+  amount  Int
+  source  String     @default("")
+  created DateTime   @default(now())
+  users   users      @relation(fields: [userId], references: [userId], onDelete: Cascade)
+}
+
+enum bonusUsage {
+  use
+  save
+}
